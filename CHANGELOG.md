@@ -3,6 +3,7 @@ All notable changes to Kafka extension will be documented in this file.
 ## [0.10.0] - TBD
 ### Added
 - Added confirmation before deleting a cluster.
+- Added support for randomized record templates, in *.kafka producer files. Simply inject mustache-like placeholders of [kafka.js properties](https://github.com/Marak/faker.js#api-methods), like ``{{name.lastName}}`` or ``{{random.number}}``. Some randomized properties can be localized via the `kafka.producers.fakerjs.locale` setting. 
 
 ### Changed
 - Fixed Kafka cluster wizard, no longer disappears when losing focus.
