@@ -74,7 +74,8 @@ export class Consumer implements vscode.Disposable {
                 consumerGroupId: consumerGroupId,
                 topicId,
                 fromOffset: fromOffset || settings.consumerOffset,
-                partitions: parsePartitions(partitions)
+                partitions: parsePartitions(partitions),
+                connectionProviderId: cluster.connectionProviderId
             };
         }
         catch (e) {

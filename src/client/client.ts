@@ -1,12 +1,13 @@
 import { Admin, ConfigResourceTypes, Kafka, Producer } from "kafkajs";
 
-import { Disposable } from "vscode";
+import { authentication, Disposable } from "vscode";
 import { WorkspaceSettings } from "../settings";
 
 export interface ConnectionOptions {
     bootstrap: string;
     saslOption?: SaslOption;
     ssl?: boolean;
+    connectionProviderId?: string;
 }
 
 export interface Cluster extends ConnectionOptions {
@@ -337,6 +338,22 @@ export const createClient = (cluster: Cluster, workspaceSettings: WorkspaceSetti
 
 export const createKafka = (connectionOptions: ConnectionOptions): Kafka => {
     let kafkaJsClient: Kafka;
+    if (connectionOptions.connectionProviderId) {
+        kafkaJsClient = new Kafka({
+            clientId: "vscode-kafka",
+            brokers: connectionOptions.bootstrap.split(","),
+            ssl: true,
+            sasl: { 
+                mechanism:'oauthbearer', 
+                oauthBearerProvider: async () => {
+                    const session = await authentication.getSession('redhat-mas-account-auth',['openid'], { createIfNone: true});
+                    const token = session?.accessToken!;
+                    return {
+                        value: token
+                    };
+            } },
+        });
+    } else 
     if (connectionOptions.saslOption && connectionOptions.saslOption.username && connectionOptions.saslOption.password) {
         kafkaJsClient = new Kafka({
             clientId: "vscode-kafka",

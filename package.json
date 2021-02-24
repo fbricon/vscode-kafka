@@ -5,7 +5,7 @@
     "publisher": "jeppeandersen",
     "version": "0.11.1",
     "engines": {
-        "vscode": "^1.37.0"
+        "vscode": "^1.53.0"
     },
     "repository": {
         "type": "git",
@@ -421,6 +421,7 @@
         "test": "node ./out/test/runTest.js"
     },
     "dependencies": {
+        "axios": "^0.21.1",
         "faker": "^5.1.0",
         "fs-extra": "^8.1.0",
         "glob": "^7.1.6",
@@ -434,7 +435,7 @@
         "@types/js-yaml": "^3.12.4",
         "@types/mocha": "^8.0.4",
         "@types/node": "^12.11.7",
-        "@types/vscode": "^1.37.0",
+        "@types/vscode": "^1.53.0",
         "@typescript-eslint/eslint-plugin": "^4.9.0",
         "@typescript-eslint/parser": "^4.9.0",
         "eslint": "^7.15.0",
