@@ -1,12 +1,52 @@
-import * as vscode from "vscode";
 import { dump } from "js-yaml";
-import { Broker, ClientAccessor } from "../client";
+import * as vscode from "vscode";
+import { Broker, ClientAccessor, Cluster } from "../client";
+import { KafkaExplorer } from "../explorer";
 import { BrokerItem } from "../explorer/models/brokers";
 import { OutputChannelProvider } from "../providers";
-import { pickBroker, pickClient, pickCluster } from "./common";
 import { ClusterSettings } from "../settings";
-import { KafkaExplorer } from "../explorer";
 import { openClusterForm, openClusterWizard } from "../wizards/clusters";
+import { showErrorMessage } from "../wizards/multiStepInput";
+import { pickBroker, pickClient, pickCluster, getNames } from "./common";
+
+
+
+export class SaveClusterCommandHandler {
+
+    constructor(protected clusterSettings: ClusterSettings, protected explorer: KafkaExplorer) {
+    }
+
+    async execute(clusters: Cluster[]): Promise<void> {
+        if (clusters.length === 0) {
+            return;
+        }
+        try {
+            // Save collected clusters in settings.
+            let createdClusterNames = getNames(clusters);
+            for (const cluster of clusters) {
+                this.clusterSettings.upsert(cluster);
+            }
+            vscode.window.showInformationMessage(`${clusters.length > 1 ? `${clusters.length} clusters` : 'Cluster'} ${createdClusterNames} created successfully`);
+    
+            // Refresh the explorer
+            this.explorer.refresh();
+    
+            // Selecting the created cluster is done with TreeView#reveal
+            // 1. Show the treeview of the explorer (otherwise reveal will not work)
+            this.explorer.show();
+            // 2. the reveal() call must occur within a timeout(),
+            // while waiting for a fix in https://github.com/microsoft/vscode/issues/114149
+            setTimeout(() => {
+                if (clusters) {
+                    this.explorer.selectClusterByName(clusters[0].name);
+                }
+            }, 1000);
+        }
+        catch (error) {
+            showErrorMessage(`Error while creating cluster`, error);
+        }
+    }
+}
 
 /**
  * Adds a new cluster to the collection.
@@ -18,7 +58,11 @@ export class AddClusterCommandHandler {
     async execute(): Promise<void> {
         openClusterWizard(this.clusterSettings, this.clientAccessor, this.explorer, this.context);
     }
+}
 
+export interface DeleteClusterRequest {
+    clusterIds : string | string[] | undefined
+    confirm: boolean
 }
 
 /**
@@ -31,20 +75,32 @@ export class DeleteClusterCommandHandler {
     constructor(private clusterSettings: ClusterSettings, private clientAccessor: ClientAccessor, private explorer: KafkaExplorer) {
     }
 
-    async execute(clusterId?: string): Promise<void> {
-        const cluster = clusterId ? this.clusterSettings.get(clusterId) : await pickCluster(this.clusterSettings);
-        if (!cluster) {
+    async execute(deleteRequest: DeleteClusterRequest): Promise<void> {
+        const clusterIds = deleteRequest.clusterIds;
+        let clusters:(Cluster|undefined)[] = [];
+        if (Array.isArray(clusterIds)) {
+            clusters = clusterIds.map(id => this.clusterSettings.get(id)).filter(c=> c !== undefined);
+        } else {
+            const cluster = clusterIds ? this.clusterSettings.get(clusterIds) : await pickCluster(this.clusterSettings);
+            if (cluster) {
+                clusters.push(cluster);
+            }
+        }
+        if (clusters.length === 0) {
             return;
         }
-
-        const deleteConfirmation = await vscode.window.showWarningMessage(`Are you sure you want to delete cluster '${cluster.name}'?`, 'Cancel', 'Delete');
-        if (deleteConfirmation !== 'Delete') {
-            return;
+        if (deleteRequest.confirm) {
+            const clusterNames = getNames(clusters);
+            const deleteConfirmation = await vscode.window.showWarningMessage(`Are you sure you want to delete cluster${clusters.length === 1?'':'s'} ${clusterNames}?`, 'Cancel', 'Delete');
+            if (deleteConfirmation !== 'Delete') {
+                return;
+            }
         }
-
-        this.clusterSettings.remove(cluster.id);
-        this.clientAccessor.remove(cluster.id);
-        this.explorer.refresh();
+        clusters.forEach(cluster => {
+            this.clusterSettings.remove(cluster!.id);
+            this.clientAccessor.remove(cluster!.id);
+            this.explorer.refresh();
+        });
     }
 }
 

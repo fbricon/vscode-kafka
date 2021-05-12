@@ -7,6 +7,7 @@ import { validateAuthentificationUserName, validateBroker, validateClusterName, 
 import { KafkaExplorer } from "../explorer";
 import { ClusterProvider, defaultClusterProviderId, getClusterProviders } from "../kafka-extensions/registry";
 import { showErrorMessage } from "./multiStepInput";
+import { getNames } from "../commands/common";
 
 export function openClusterWizard(clusterSettings: ClusterSettings, clientAccessor: ClientAccessor, explorer: KafkaExplorer, context: vscode.ExtensionContext) {
     const providers = getClusterProviders();
@@ -419,15 +420,7 @@ function saveCluster(update: boolean, data: any, cluster: Cluster, clusterSettin
 function saveClusters(update: boolean, clusters: Cluster[], clusterSettings: ClusterSettings, clientAccessor: ClientAccessor, explorer: KafkaExplorer) {
     try {
         // Save collected clusters in settings.
-        let createdClusterNames = '';
-        for (const cluster of clusters) {
-            clusterSettings.upsert(cluster);
-            clientAccessor.remove(cluster.id);
-            if (createdClusterNames !== '') {
-                createdClusterNames += '\', \'';
-            }
-            createdClusterNames += cluster.name;
-        }
+        let createdClusterNames = getNames(clusters);
         vscode.window.showInformationMessage(`${clusters.length > 1 ? `${clusters.length} clusters` : 'Cluster'} '${createdClusterNames}' ${update ? 'updated' : 'created'} successfully`);
 
         // Refresh the explorer

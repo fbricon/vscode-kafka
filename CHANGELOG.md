@@ -10,6 +10,7 @@ All notable changes to `Tools for Apache Kafka®` are documented in this file.
 - Hover support in `.kafka` files. See [#149](https://github.com/jlandersen/vscode-kafka/issues/149).
 - String encoding serialization support. See [#181](https://github.com/jlandersen/vscode-kafka/issues/181).
 - Refresh Cluster Provider API when extensions are installed/uninstalled. See [#137](https://github.com/jlandersen/vscode-kafka/issues/137).
+- Expose new internal commands (`vscode-kafka.api.saveclusters` and `vscode-kafka.api.deleteclusters`) to programmatically add/delete clusters (from 3rd party extensions). See [#182](https://github.com/jlandersen/vscode-kafka/issues/182).
 
 ## [0.12.0] - 2021-04-26
 ### Added

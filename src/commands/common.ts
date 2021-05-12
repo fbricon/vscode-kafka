@@ -77,3 +77,17 @@ export async function pickBroker(clientAccessor: ClientAccessor): Promise<Broker
     const pickedBroker = await vscode.window.showQuickPick(brokerQuickPickItems);
     return pickedBroker?.broker;
 }
+
+export function getNames(clusters: (Cluster|undefined)[]): string {
+    let names = '';
+    for (const cluster of clusters) {
+        if (names !== '') {
+            names += '\', \'';
+        }
+        names += cluster!.name;
+    }
+    if (names !== '') {
+        names = '\''+names+'\'';
+    }
+    return names;
+}
